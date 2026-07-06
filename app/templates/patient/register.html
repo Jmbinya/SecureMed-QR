@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Register — SecureMed QR{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h1 class="card-title">Create your medical profile</h1>
+  <p class="card-sub">Your data is encrypted before storage. Only a valid QR scan + one-time password can unlock it.</p>
+
+  <form method="POST" action="{{ url_for('patient.register_submit') }}">
+
+    <div class="section-label">Personal</div>
+    <div class="form-group">
+      <label for="full_name">Full name</label>
+      <input type="text" id="full_name" name="full_name" required placeholder="input name">
+    </div>
+    <div class="form-group">
+      <label for="blood_type">Blood type</label>
+      <select id="blood_type" name="blood_type" required>
+        <option value="">— select —</option>
+        {% for bt in ["A+","A-","B+","B-","AB+","AB-","O+","O-"] %}
+          <option value="{{ bt }}">{{ bt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="section-label">Medical info</div>
+    <div class="form-group">
+      <label for="allergies">Allergies</label>
+      <textarea id="allergies" name="allergies" rows="2" placeholder="e.g. Penicillin, Latex (leave blank if none)"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="conditions">Chronic conditions</label>
+      <textarea id="conditions" name="conditions" rows="2" placeholder="e.g. Type 2 Diabetes, Asthma (leave blank if none)"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="medications">Current medications</label>
+      <textarea id="medications" name="medications" rows="2" placeholder="e.g. Metformin 500mg (leave blank if none)"></textarea>
+    </div>
+
+    <div class="section-label">Emergency contact</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="emergency_name">Contact name</label>
+        <input type="text" id="emergency_name" name="emergency_name" required placeholder="John Doe">
+      </div>
+      <div class="form-group">
+        <label for="emergency_phone">Contact phone</label>
+        <input type="tel" id="emergency_phone" name="emergency_phone" required placeholder="+254 700 000000">
+      </div>
+    </div>
+
+    <div class="section-label">Security</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required minlength="8" placeholder="Min 8 characters">
+      </div>
+      <div class="form-group">
+        <label for="confirm_password">Confirm password</label>
+        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Repeat password">
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create profile &amp; generate QR</button>
+  </form>
+</div>
+{% endblock %}

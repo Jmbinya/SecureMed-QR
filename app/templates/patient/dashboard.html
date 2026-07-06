@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SecureMed QR{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h1 class="card-title">Welcome, {{ full_name }}</h1>
+  <p class="card-sub">Print or save your QR code and keep it on you at all times — on a wristband, wallet card, or phone.</p>
+
+  <div class="qr-section">
+    <img src="{{ url_for('patient.qr_image', qr_id=qr_id) }}"
+         alt="Your SecureMed QR code"
+         class="qr-image">
+    <a href="{{ url_for('patient.qr_image', qr_id=qr_id) }}"
+       download="securemed-qr.png"
+       class="btn btn-primary">Download QR code</a>
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="card-title">Recent access log</h2>
+  {% if logs %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Responder IP</th>
+          <th>Result</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.accessed_at }}</td>
+          <td>{{ log.responder_ip }}</td>
+          <td>
+            {% if log.success %}
+              <span class="badge badge-success">Success</span>
+            {% else %}
+              <span class="badge badge-danger">Failed</span>
+            {% endif %}
+          </td>
+          <td>{{ log.failure_reason or "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">No access attempts recorded yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
