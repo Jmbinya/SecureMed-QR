@@ -17,7 +17,7 @@ import bcrypt
 import qrcode
 from flask import (
     Blueprint, render_template, request, redirect,
-    url_for, session, send_file, flash, g
+    url_for, session, send_file, flash
 )
 
 from app.utils.crypto   import generate_salt, derive_key, encrypt
@@ -34,24 +34,11 @@ patient_bp = Blueprint("patient", __name__)
 
 @patient_bp.route("/register", methods=["GET"])
 def register_form():
-    """Render the patient registration form."""
     return render_template("patient/register.html")
 
 
 @patient_bp.route("/register", methods=["POST"])
 def register_submit():
-    """
-    Full registration pipeline:
-      1. Collect and validate form fields
-      2. Hash the password with bcrypt
-      3. Assemble the medical record as JSON
-      4. SHA-256 hash the plaintext record
-      5. Derive AES key via PBKDF2 (qr_id + random salt)
-      6. Encrypt the record with AES-256-GCM
-      7. Generate a TOTP secret
-      8. Store everything in the patients table
-      9. Put qr_id in session and redirect to dashboard
-    """
     # --- 1. Collect fields ---
     full_name       = request.form.get("full_name",       "").strip()
     blood_type      = request.form.get("blood_type",      "").strip()
@@ -99,8 +86,8 @@ def register_submit():
     data_hash = hash_record(plaintext)
 
     # --- 5. Derive encryption key ---
-    qr_id = str(uuid.uuid4())        # unique public identifier for this patient
-    salt  = generate_salt()          # random 32-byte PBKDF2 salt
+    qr_id = str(uuid.uuid4())
+    salt  = generate_salt()
     key   = derive_key(qr_id, salt)
 
     # --- 6. Encrypt ---
@@ -136,17 +123,17 @@ def register_submit():
 
 
 # ---------------------------------------------------------------------------
-# QR Code image
+# QR Code image — FIX: use request.host_url instead of _external=True
 # ---------------------------------------------------------------------------
 
 @patient_bp.route("/qr/<qr_id>")
 def qr_image(qr_id):
     """
-    Generate and serve a QR code PNG for the given qr_id.
-    The QR encodes the full /scan/<qr_id> URL so a phone camera
-    takes the responder directly to the OTP entry page.
+    Generate and serve a QR code PNG.
+    Encodes the full /scan/<qr_id> URL using the actual request host,
+    so it works on localhost, LAN, and production without SERVER_NAME config.
     """
-    scan_url = url_for("responder.scan", qr_id=qr_id, _external=True)
+    scan_url = f"{request.host_url.rstrip('/')}/scan/{qr_id}"
 
     img = qrcode.make(scan_url)
     buf = io.BytesIO()
@@ -157,17 +144,13 @@ def qr_image(qr_id):
 
 
 # ---------------------------------------------------------------------------
-# Patient dashboard
+# Dashboard
 # ---------------------------------------------------------------------------
 
 @patient_bp.route("/dashboard")
 def dashboard():
-    """
-    Show the patient their QR code and a log of who has accessed their record.
-    Requires an active patient session.
-    """
     if session.get("role") != "patient":
-        flash("Please log in to view your dashboard.", "error")
+        flash("Please register to view your dashboard.", "error")
         return redirect(url_for("patient.register_form"))
 
     qr_id     = session["qr_id"]
