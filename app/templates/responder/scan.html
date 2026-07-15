@@ -1,24 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Emergency Access — SecureMed QR{% endblock %}
+{% block wrapper_class %}{% endblock %}
 
 {% block content %}
+<div style="min-height:80vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--gray-50)">
 {% if not found %}
-  <div class="card text-center">
-    <div style="font-size:48px;margin-bottom:1rem">⚠️</div>
+  <div class="card text-center" style="max-width:440px">
+    <div style="font-size:52px;margin-bottom:1rem">⚠️</div>
     <h1 class="card-title">QR Code Not Recognised</h1>
-    <p class="card-sub">This profile does not exist or the QR code is damaged.</p>
+    <p class="card-sub">This profile does not exist or the QR code may be damaged. Contact the patient's emergency contact directly.</p>
   </div>
 
 {% else %}
-  <div class="card">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-      <span style="font-size:22px">🚨</span>
-      <h1 class="card-title" style="margin-bottom:0">Emergency Medical Access</h1>
+  <div class="card" style="max-width:480px;width:100%">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <span style="font-size:26px">🚨</span>
+      <h1 class="card-title" style="margin-bottom:0;font-size:22px">Emergency Medical Access</h1>
     </div>
-    <p class="card-sub">Enter the one-time code below to unlock this patient's critical medical information.</p>
+    <p class="card-sub">Enter the one-time code displayed below to unlock this patient's critical medical information.</p>
 
-    <div class="otp-code">{{ otp_code }}</div>
-    <p class="otp-timer">This code refreshes every 30 seconds</p>
+    <div class="otp-box">
+      <div class="otp-code">{{ otp_code }}</div>
+      <div class="otp-label">This code refreshes every 30 seconds</div>
+    </div>
 
     <form method="POST" action="{{ url_for('responder.verify', qr_id=qr_id) }}">
       <div class="form-group">
@@ -27,22 +31,22 @@
           type="text"
           id="otp_code"
           name="otp_code"
+          class="otp-input"
           maxlength="6"
           pattern="\d{6}"
           inputmode="numeric"
           autocomplete="one-time-code"
           placeholder="000000"
           required
-          autofocus
-          style="font-size:24px;letter-spacing:.2em;text-align:center"
-        >
+          autofocus>
       </div>
-      <button type="submit" class="btn btn-primary">Unlock medical record</button>
+      <button type="submit" class="btn btn-primary btn-block">Unlock medical record →</button>
     </form>
-  </div>
 
-  <p class="text-muted text-center mt-1">
-    Every access attempt is logged with timestamp and IP address.
-  </p>
+    <p class="text-center text-sm text-muted mt-1">
+      🔒 Every access attempt is logged with timestamp and IP address.
+    </p>
+  </div>
 {% endif %}
+</div>
 {% endblock %}
