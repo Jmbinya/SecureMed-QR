@@ -92,15 +92,26 @@ SecureMed-QR/
 
 ### Install
 
-```bash
+#### Windows (recommended)
+
+Use the provided script:
+
+```bat
+scripts\setup_and_run_windows.bat
+```
+
+#### Manual (Windows)
+
+```bat
 git clone <repo-url>
 cd SecureMed-QR
 
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+venv\Scripts\activate
 
 pip install -r requirements.txt
 ```
+
 
 ### Configure
 
