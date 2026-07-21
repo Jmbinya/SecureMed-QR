@@ -17,7 +17,7 @@ import bcrypt
 import qrcode
 from flask import (
     Blueprint, render_template, request, redirect,
-    url_for, session, send_file, flash
+    url_for, session, send_file, flash, current_app
 )
 
 from app.utils.crypto   import generate_salt, derive_key, encrypt
@@ -123,17 +123,22 @@ def register_submit():
 
 
 # ---------------------------------------------------------------------------
-# QR Code image — FIX: use request.host_url instead of _external=True
+# QR Code image — uses BASE_URL config for LAN / mobile access
 # ---------------------------------------------------------------------------
 
 @patient_bp.route("/qr/<qr_id>")
 def qr_image(qr_id):
     """
     Generate and serve a QR code PNG.
-    Encodes the full /scan/<qr_id> URL using the actual request host,
-    so it works on localhost, LAN, and production without SERVER_NAME config.
+    Encodes the full /scan/<qr_id> URL.
+    Uses BASE_URL from app config (settable via .env) if available,
+    so QR codes work when scanned from a phone on the same Wi-Fi.
     """
-    scan_url = f"{request.host_url.rstrip('/')}/scan/{qr_id}"
+    base_url = current_app.config.get("BASE_URL", "")
+    if base_url:
+        scan_url = f"{base_url}/scan/{qr_id}"
+    else:
+        scan_url = f"{request.host_url.rstrip('/')}/scan/{qr_id}"
 
     img = qrcode.make(scan_url)
     buf = io.BytesIO()

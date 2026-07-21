@@ -1,7 +1,6 @@
-from flask import Flask, render_template
+`from flask import Flask, render_template
 from config import Config
 from app.utils.db import init_db, close_db
-
 
 
 def create_app():
@@ -16,10 +15,11 @@ def create_app():
     app.teardown_appcontext(close_db)
 
     # Register routes and blueprints
-    from app.routes.patient import patient_bp
+    from app.routes.patient   import patient_bp
     from app.routes.responder import responder_bp
+    from app.routes.main      import main_bp
 
-    app.add_url_rule('/', endpoint='main.index', view_func=lambda: render_template('index.html'))
+    app.register_blueprint(main_bp)
     app.register_blueprint(patient_bp)
     app.register_blueprint(responder_bp)
 
