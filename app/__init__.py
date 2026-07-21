@@ -1,4 +1,4 @@
-`from flask import Flask, render_template
+from flask import Flask, render_template
 from config import Config
 from app.utils.db import init_db, close_db
 

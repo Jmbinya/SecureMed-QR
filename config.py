@@ -5,6 +5,7 @@ load_dotenv()
 class Config:
     SECRET_KEY          = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
     SESSION_TYPE        = "filesystem"
+    SESSION_FILE_DIR    = os.environ.get("SESSION_FILE_DIR","//tmp/flask_session")
     SESSION_PERMANENT   = False
     SESSION_USE_SIGNER  = True
     PBKDF2_ITERATIONS   = 600_000
