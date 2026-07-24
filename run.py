@@ -1,7 +1,7 @@
 import socket
 from app import create_app
 
-# ── Auto-detect LAN IP and inject into config ──
+# -- Auto-detect LAN IP and inject into config --
 LAN_IP = None
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,9 +19,9 @@ if not app.config.get("BASE_URL"):
     app.config["BASE_URL"] = f"http://{LAN_IP}:5000"
 
 if __name__ == "__main__":
-    print(f"\n🌐 Your LAN IP is: {LAN_IP}")
-    print(f"📱 On your phone, visit http://{LAN_IP}:5000")
-    print(f"🔗 QR codes will encode: http://{LAN_IP}:5000/scan/<qr_id>\n")
+    print(f"\n[NET] Your LAN IP is: {LAN_IP}")
+    print(f"[NET] On your phone, visit http://{LAN_IP}:5000")
+    print(f"[NET] QR codes will encode: http://{LAN_IP}:5000/scan/<qr_id>\n")
 
     # 0.0.0.0 makes Flask accessible from other devices on your network
     app.run(debug=True, host="0.0.0.0", port=5000)

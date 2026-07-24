@@ -1,11 +1,27 @@
 from flask import Flask, render_template
 from config import Config
+from flask_session import Session
+from flask_wtf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from app.utils.db import init_db, close_db
+
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address)
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Initialise server-side Redis sessions
+    Session(app)
+
+    # Initialise CSRF protection
+    csrf.init_app(app)
+
+    # Initialise rate limiter (uses Redis storage from config)
+    limiter.init_app(app)
 
     # Initialise database (creates DB + tables if not present)
     with app.app_context():
@@ -22,5 +38,11 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(patient_bp)
     app.register_blueprint(responder_bp)
+
+    # --- Custom error handlers ---
+    @app.errorhandler(429)
+    def rate_limit_exceeded(e):
+        """Return a friendly page when rate-limited instead of raw 429."""
+        return render_template("responder/scan.html", found=False), 429
 
     return app

@@ -16,6 +16,7 @@ from flask import (
 )
 from cryptography.exceptions import InvalidTag
 
+from app import limiter
 from app.utils.crypto   import derive_key, decrypt
 from app.utils.hashing  import verify_hash
 from app.utils.otp      import generate_otp, verify_otp
@@ -35,6 +36,7 @@ def _get_responder_ip():
 # ---------------------------------------------------------------------------
 
 @responder_bp.route("/scan/<qr_id>")
+@limiter.limit("20 per minute")
 def scan(qr_id):
     patient = get_patient(qr_id)
 
@@ -64,6 +66,7 @@ def scan(qr_id):
 # ---------------------------------------------------------------------------
 
 @responder_bp.route("/verify/<qr_id>", methods=["POST"])
+@limiter.limit("5 per minute")
 def verify(qr_id):
     ip        = _get_responder_ip()
     submitted = request.form.get("otp_code", "").strip()

@@ -24,7 +24,8 @@
       <div class="otp-label">This code refreshes every 30 seconds</div>
     </div>
 
-    <form method="POST" action="{{ url_for('responder.verify', qr_id=qr_id) }}">
+<form method="POST" action="{{ url_for('responder.verify', qr_id=qr_id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label for="otp_code">Enter the 6-digit code shown above</label>
         <input

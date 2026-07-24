@@ -1,0 +1,73 @@
+[db] Database `securemed` and tables ready.
+
+[NET] Your LAN IP is: 10.51.59.121
+[NET] On your phone, visit http://10.51.59.121:5000
+[NET] QR codes will encode: http://10.51.59.121:5000/scan/<qr_id>
+
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.51.59.121:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 216-833-188
+127.0.0.1 - - [24/Jul/2026 18:46:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [24/Jul/2026 18:46:59] "GET /static/css/main.css HTTP/1.1" 200 -
+127.0.0.1 - - [24/Jul/2026 18:47:12] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [24/Jul/2026 18:47:12] "GET /register HTTP/1.1" 200 -
+127.0.0.1 - - [24/Jul/2026 18:47:14] "POST /register HTTP/1.1" 302 -
+127.0.0.1 - - [24/Jul/2026 18:47:15] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [24/Jul/2026 18:47:15] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [24/Jul/2026 18:48:32] "GET /register HTTP/1.1" 200 -
+127.0.0.1 - - [24/Jul/2026 18:48:32] "GET /static/css/main.css HTTP/1.1" 304 -
+ * Detected change in 'C:\\Users\\USER\\2026 projects\\SecureMed-QR\\venv\\Lib\\site-packages\\redis\\_parsers\\__init__.py', reloading
+[db] Database `securemed` and tables ready.
+
+[NET] Your LAN IP is: 10.51.59.121
+[NET] On your phone, visit http://10.51.59.121:5000
+[NET] QR codes will encode: http://10.51.59.121:5000/scan/<qr_id>
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 216-833-188
+ * Detected change in 'C:\\Users\\USER\\2026 projects\\SecureMed-QR\\venv\\Lib\\site-packages\\mysql\\connector\\authentication.py', reloading
+[db] Database `securemed` and tables ready.
+
+[NET] Your LAN IP is: 10.51.59.121
+[NET] On your phone, visit http://10.51.59.121:5000
+[NET] QR codes will encode: http://10.51.59.121:5000/scan/<qr_id>
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 216-833-188
+ * Detected change in 'c:\\Users\\USER\\2026 projects\\SecureMed-QR\\app\\__init__.py', reloading
+[db] Database `securemed` and tables ready.
+
+[NET] Your LAN IP is: 10.51.59.121
+[NET] On your phone, visit http://10.51.59.121:5000
+[NET] QR codes will encode: http://10.51.59.121:5000/scan/<qr_id>
+
+ * Restarting with stat
+C:\Users\USER\2026 projects\SecureMed-QR\venv\Lib\site-packages\flask_limiter\extension.py:333: UserWarning: Using the in-memory storage for tracking rate limits as no storage was explicitly specified. This is not recommended for production use. See: https://flask-limiter.readthedocs.io#configuring-a-storage-backend for documentation about configuring the storage backend.
+  warnings.warn(
+ * Debugger is active!
+ * Debugger PIN: 216-833-188
+ * Detected change in 'c:\\Users\\USER\\2026 projects\\SecureMed-QR\\config.py', reloading
+[db] Database `securemed` and tables ready.
+
+[NET] Your LAN IP is: 10.51.59.121
+[NET] On your phone, visit http://10.51.59.121:5000
+[NET] QR codes will encode: http://10.51.59.121:5000/scan/<qr_id>
+
+ * Restarting with stat
+Traceback (most recent call last):
+  File "c:\Users\USER\2026 projects\SecureMed-QR\run.py", line 2, in <module>
+    from app import create_app
+  File "c:\Users\USER\2026 projects\SecureMed-QR\app\__init__.py", line 2, in <module>
+    from config import Config
+  File "c:\Users\USER\2026 projects\SecureMed-QR\config.py", line 13
+    RATELIMIT_STORAGE_URI   = os.environ.get("REDIS_URL", "redis://localhost:6379")
+IndentationError: unexpected indent
