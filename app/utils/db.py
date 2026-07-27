@@ -82,13 +82,22 @@ CREATE INDEX IF NOT EXISTS idx_patient ON access_logs (patient_qr_id);
 CREATE INDEX IF NOT EXISTS idx_time    ON access_logs (accessed_at);
 """
 
+
 def init_db():
     """
     Create both tables if they don't exist.
     Called once from create_app() on startup.
     Render provisions the database itself — we just create tables in it.
+
+    If DATABASE_URL is not set (local dev without PostgreSQL), this is a no-op.
+    The landing page and static routes still work — only registration/scan
+    endpoints require the database.
     """
-    conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
+    dsn = os.environ.get("DATABASE_URL")
+    if not dsn:
+        print("[db] DATABASE_URL not set — skipping DB init (local dev mode).")
+        return
+    conn = psycopg2.connect(dsn)
     conn.autocommit = True
     cursor = conn.cursor()
     cursor.execute(CREATE_PATIENTS)
