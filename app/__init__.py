@@ -1,4 +1,5 @@
 from flask import Flask, render_template
+from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
 from flask_session import Session
 from flask_wtf import CSRFProtect
@@ -13,6 +14,11 @@ limiter = Limiter(key_func=get_remote_address)
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Render sits behind a reverse proxy - trust its X-Forwarded-* headers
+    # so request.host_url, url_for(_external=True), and client IPs
+    # (used by rate limiting and access_logs) are correct.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Initialise server-side Redis sessions
     Session(app)
