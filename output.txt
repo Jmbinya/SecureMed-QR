@@ -1,3 +1,0 @@
-[db] Database `securemed` and tables ready.
-STATUS: 200
-LENGTH: 6661

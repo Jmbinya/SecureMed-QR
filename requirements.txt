@@ -5,8 +5,8 @@ flask-session==0.8.0
 # Production server
 gunicorn==22.0.0
 
-# MySQL database
-mysql-connector-python==8.4.0
+# PostgreSQL database (Render free tier)
+psycopg2-binary==2.9.9
 
 # Security & cryptography
 cryptography==42.0.8

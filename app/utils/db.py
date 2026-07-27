@@ -1,15 +1,17 @@
 """
-db.py — MySQL connection and database operations for SecureMed QR.
+db.py — PostgreSQL connection and database operations for SecureMed QR.
+(Migrated from MySQL for Render's free Postgres tier.)
 
 Tables:
   patients     — encrypted medical records, one row per patient
   access_logs  — every scan attempt (success or failure) for audit trail
 """
 
-import mysql.connector
-from mysql.connector import pooling
-from flask import current_app, g
 import os
+import psycopg2
+from psycopg2 import pool
+from psycopg2.extras import RealDictCursor
+from flask import g
 
 
 # ---------------------------------------------------------------------------
@@ -21,15 +23,10 @@ _pool = None
 def get_pool():
     global _pool
     if _pool is None:
-        _pool = pooling.MySQLConnectionPool(
-            pool_name="securemed_pool",
-            pool_size=5,
-            host=os.environ.get("DB_HOST", "localhost"),
-            port=int(os.environ.get("DB_PORT", 3306)),
-            user=os.environ.get("DB_USER", "root"),
-            password=os.environ.get("DB_PASSWORD", ""),
-            database=os.environ.get("DB_NAME", "securemed"),
-            autocommit=False,
+        _pool = psycopg2.pool.SimpleConnectionPool(
+            minconn=1,
+            maxconn=5,
+            dsn=os.environ.get("DATABASE_URL"),
         )
     return _pool
 
@@ -39,17 +36,17 @@ def get_pool():
 # ---------------------------------------------------------------------------
 
 def get_db():
-    """Return a MySQL connection for the current request."""
+    """Return a Postgres connection for the current request."""
     if "db" not in g:
-        g.db = get_pool().get_connection()
+        g.db = get_pool().getconn()
     return g.db
 
 
 def close_db(e=None):
     """Release the connection back to the pool at end of request."""
     db = g.pop("db", None)
-    if db is not None and db.is_connected():
-        db.close()
+    if db is not None:
+        get_pool().putconn(db)
 
 
 # ---------------------------------------------------------------------------
@@ -58,58 +55,47 @@ def close_db(e=None):
 
 CREATE_PATIENTS = """
 CREATE TABLE IF NOT EXISTS patients (
-    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    qr_id         VARCHAR(64)  NOT NULL UNIQUE,   -- public ID embedded in QR
-    encrypted_data LONGBLOB    NOT NULL,           -- AES-256-GCM ciphertext
-    iv            VARBINARY(16) NOT NULL,          -- GCM initialisation vector
-    gcm_tag       VARBINARY(16) NOT NULL,          -- GCM authentication tag
-    data_hash     CHAR(64)     NOT NULL,           -- SHA-256 of plaintext
-    salt          VARBINARY(32) NOT NULL,          -- PBKDF2 salt for key derivation
-    totp_secret   VARCHAR(64)  NOT NULL,           -- base32 TOTP secret
-    password_hash VARCHAR(255) NOT NULL,           -- bcrypt hash of patient password
-    created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    id            SERIAL PRIMARY KEY,
+    qr_id         VARCHAR(64)  NOT NULL UNIQUE,
+    encrypted_data BYTEA       NOT NULL,
+    iv            BYTEA        NOT NULL,
+    gcm_tag       BYTEA        NOT NULL,
+    data_hash     CHAR(64)     NOT NULL,
+    salt          BYTEA        NOT NULL,
+    totp_secret   VARCHAR(64)  NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 CREATE_ACCESS_LOGS = """
 CREATE TABLE IF NOT EXISTS access_logs (
-    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    patient_qr_id VARCHAR(64)  NOT NULL,           -- which patient was accessed
-    responder_ip  VARCHAR(45)  NOT NULL,           -- IPv4 or IPv6
-    accessed_at   DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    success       TINYINT(1)   NOT NULL DEFAULT 0, -- 1 = OTP verified, 0 = failed
-    failure_reason VARCHAR(128) DEFAULT NULL,      -- e.g. 'invalid_otp', 'expired'
-    INDEX idx_patient (patient_qr_id),
-    INDEX idx_time    (accessed_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    id             SERIAL PRIMARY KEY,
+    patient_qr_id  VARCHAR(64)  NOT NULL,
+    responder_ip   VARCHAR(45)  NOT NULL,
+    accessed_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    success        BOOLEAN      NOT NULL DEFAULT FALSE,
+    failure_reason VARCHAR(128) DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_patient ON access_logs (patient_qr_id);
+CREATE INDEX IF NOT EXISTS idx_time    ON access_logs (accessed_at);
 """
 
 def init_db():
     """
-    Create the securemed database and both tables if they don't exist.
+    Create both tables if they don't exist.
     Called once from create_app() on startup.
+    Render provisions the database itself — we just create tables in it.
     """
-    # Connect without specifying a database first so we can CREATE it
-    conn = mysql.connector.connect(
-        host=os.environ.get("DB_HOST", "localhost"),
-        port=int(os.environ.get("DB_PORT", 3306)),
-        user=os.environ.get("DB_USER", "root"),
-        password=os.environ.get("DB_PASSWORD", ""),
-    )
+    conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
+    conn.autocommit = True
     cursor = conn.cursor()
-    db_name = os.environ.get("DB_NAME", "securemed")
-    cursor.execute(
-        f"CREATE DATABASE IF NOT EXISTS `{db_name}` "
-        f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-    )
-    cursor.execute(f"USE `{db_name}`;")
     cursor.execute(CREATE_PATIENTS)
     cursor.execute(CREATE_ACCESS_LOGS)
-    conn.commit()
     cursor.close()
     conn.close()
-    print(f"[db] Database `{db_name}` and tables ready.")
+    print("[db] Tables ready.")
 
 
 # ---------------------------------------------------------------------------
@@ -120,7 +106,8 @@ def insert_patient(qr_id, encrypted_data, iv, gcm_tag,
                    data_hash, salt, totp_secret, password_hash):
     """
     Insert a newly registered patient record.
-    All binary values (iv, gcm_tag, salt, encrypted_data) must be bytes.
+    Binary values (iv, gcm_tag, salt, encrypted_data) must be bytes —
+    psycopg2.Binary() wraps them for BYTEA columns.
     """
     sql = """
         INSERT INTO patients
@@ -131,8 +118,14 @@ def insert_patient(qr_id, encrypted_data, iv, gcm_tag,
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(sql, (
-        qr_id, encrypted_data, iv, gcm_tag,
-        data_hash, salt, totp_secret, password_hash
+        qr_id,
+        psycopg2.Binary(encrypted_data),
+        psycopg2.Binary(iv),
+        psycopg2.Binary(gcm_tag),
+        data_hash,
+        psycopg2.Binary(salt),
+        totp_secret,
+        password_hash,
     ))
     conn.commit()
     cursor.close()
@@ -142,6 +135,9 @@ def get_patient(qr_id):
     """
     Fetch a patient row by QR ID.
     Returns a dict or None if not found.
+    Note: BYTEA columns come back as memoryview objects — callers that
+    need `bytes` (e.g. crypto.decrypt) should wrap with bytes(...),
+    which app/routes/responder.py already does.
     """
     sql = """
         SELECT qr_id, encrypted_data, iv, gcm_tag,
@@ -151,11 +147,11 @@ def get_patient(qr_id):
         LIMIT 1
     """
     conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute(sql, (qr_id,))
     row = cursor.fetchone()
     cursor.close()
-    return row
+    return dict(row) if row else None
 
 
 def update_patient(qr_id, encrypted_data, iv, gcm_tag, data_hash):
@@ -167,7 +163,13 @@ def update_patient(qr_id, encrypted_data, iv, gcm_tag, data_hash):
     """
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(sql, (encrypted_data, iv, gcm_tag, data_hash, qr_id))
+    cursor.execute(sql, (
+        psycopg2.Binary(encrypted_data),
+        psycopg2.Binary(iv),
+        psycopg2.Binary(gcm_tag),
+        data_hash,
+        qr_id,
+    ))
     conn.commit()
     cursor.close()
 
@@ -177,17 +179,14 @@ def update_patient(qr_id, encrypted_data, iv, gcm_tag, data_hash):
 # ---------------------------------------------------------------------------
 
 def log_access(patient_qr_id, responder_ip, success, failure_reason=None):
-    """
-    Write one row to access_logs.
-    Call this for every scan attempt — successful or not.
-    """
+    """Write one row to access_logs. Call for every scan attempt."""
     sql = """
         INSERT INTO access_logs (patient_qr_id, responder_ip, success, failure_reason)
         VALUES (%s, %s, %s, %s)
     """
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(sql, (patient_qr_id, responder_ip, int(success), failure_reason))
+    cursor.execute(sql, (patient_qr_id, responder_ip, bool(success), failure_reason))
     conn.commit()
     cursor.close()
 
@@ -202,8 +201,8 @@ def get_access_logs(patient_qr_id, limit=20):
         LIMIT %s
     """
     conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute(sql, (patient_qr_id, limit))
     rows = cursor.fetchall()
     cursor.close()
-    return rows
+    return [dict(r) for r in rows]
