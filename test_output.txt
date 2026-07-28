@@ -1,0 +1,4 @@
+[db] DATABASE_URL not set — skipping DB init (local dev mode).
+OK
+SESSION_TYPE: filesystem
+RATELIMIT_STORAGE: memory://
