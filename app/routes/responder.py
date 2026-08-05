@@ -84,12 +84,11 @@ def verify(qr_id):
 
     # --- Derive AES key ---
     try:
-        key = derive_key(qr_id, patient["salt"])
+        key = derive_key(qr_id, bytes(patient["salt"]))
     except Exception:
         log_access(qr_id, ip, success=False, failure_reason="key_derivation_error")
         flash("Internal security error. Access denied.", "error")
         return redirect(url_for("responder.scan", qr_id=qr_id))
-
     # --- Decrypt record ---
     try:
         plaintext = decrypt(
