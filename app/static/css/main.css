@@ -556,3 +556,97 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ===================================================
+   v3 additions — 3D interactions, imagery, motion
+   =================================================== */
+
+/* ── Hero background image + parallax ── */
+.hero {
+  background-image:
+    var(--gradient-hero),
+    url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=60');
+  background-size: cover, cover;
+  background-position: center, center 30%;
+  background-blend-mode: normal, luminosity;
+  background-attachment: fixed;
+}
+@media (max-width: 900px) { .hero { background-attachment: scroll; } }
+
+/* ── 3D tilt cards (JS sets --rx / --ry via mousemove) ── */
+.tilt-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateZ(0);
+  transition: transform .15s ease-out, box-shadow .3s var(--ease);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.tilt-card:hover {
+  box-shadow: 0 30px 60px -20px rgba(15,23,42,.35), 0 10px 24px -8px rgba(37,99,235,.25);
+}
+.tilt-card-inner { transform: translateZ(30px); }
+
+/* ── Glassmorphism panel variant ── */
+.glass-panel {
+  background: rgba(255,255,255,.65);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255,255,255,.5);
+}
+
+/* ── Scroll reveal (JS toggles .is-visible) ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .7s var(--ease), transform .7s var(--ease);
+}
+.reveal.is-visible { opacity: 1; transform: none; }
+.reveal-delay-1 { transition-delay: .08s; }
+.reveal-delay-2 { transition-delay: .16s; }
+.reveal-delay-3 { transition-delay: .24s; }
+
+/* ── Floating glow orbs (decorative, behind hero content) ── */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: .35;
+  animation: floatOrb 12s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+.orb-1 { width: 300px; height: 300px; background: var(--blue-500); top: 10%; left: 8%; }
+.orb-2 { width: 220px; height: 220px; background: var(--emerald-500); bottom: 5%; right: 10%; animation-delay: -4s; }
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  50%      { transform: translate(20px,-30px) scale(1.08); }
+}
+
+/* ── QR ID copy box (dashboard) ── */
+.qrid-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--slate-50); border: 1px solid var(--slate-200);
+  border-radius: var(--radius); padding: 10px 14px;
+  max-width: 100%;
+}
+.qrid-label { font-size: 11px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: .06em; }
+.qrid-value {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  color: var(--navy-900); overflow-x: auto; white-space: nowrap;
+  flex: 1; padding: 4px 8px; background: var(--white); border-radius: 6px;
+}
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ── Image polish for step cards / sec cards ── */
+.step-card, .sec-card, .card { transform-style: preserve-3d; }
+
+/* ── OTP box 3D tilt wrapper radius fix ── */
+.otp-box.tilt-card-inner,
+.tilt-card:has(.otp-box) { border-radius: var(--radius-lg); overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .orb { animation: none; }
+  .tilt-card { transform: none !important; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+}

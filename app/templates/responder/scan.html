@@ -12,16 +12,18 @@
   </div>
 
 {% else %}
-  <div class="card" style="max-width:480px;width:100%">
+<div class="card reveal" style="max-width:480px;width:100%">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <span style="font-size:26px">🚨</span>
       <h1 class="card-title" style="margin-bottom:0;font-size:22px">Emergency Medical Access</h1>
     </div>
     <p class="card-sub">Enter the one-time code displayed below to unlock this patient's critical medical information.</p>
 
-    <div class="otp-box">
-      <div class="otp-code">{{ otp_code }}</div>
-      <div class="otp-label">This code refreshes every 30 seconds</div>
+    <div class="tilt-card" style="border-radius:var(--radius-lg);overflow:hidden">
+      <div class="tilt-card-inner otp-box">
+        <div class="otp-code">{{ otp_code }}</div>
+        <div class="otp-label">This code refreshes every 30 seconds</div>
+      </div>
     </div>
 
 <form method="POST" action="{{ url_for('responder.verify', qr_id=qr_id) }}">

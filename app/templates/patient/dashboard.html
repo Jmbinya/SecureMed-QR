@@ -3,14 +3,25 @@
 
 {% block content %}
 <div style="padding: 2.5rem 0">
-<div class="card">
+<div class="card reveal">
   <h1 class="card-title">Welcome, {{ full_name }} 👋</h1>
   <p class="card-sub">Your medical profile is encrypted and ready. Print or save your QR code — carry it on a wristband, wallet card, or keep it on your phone.</p>
 
   <div class="qr-section">
-    <img src="{{ url_for('patient.qr_image', qr_id=qr_id) }}"
-         alt="Your SecureMed QR code"
-         class="qr-image">
+    <div class="tilt-card" style="display:inline-block;border-radius:var(--radius-lg)">
+      <div class="tilt-card-inner">
+        <img src="{{ url_for('patient.qr_image', qr_id=qr_id) }}"
+             alt="Your SecureMed QR code"
+             class="qr-image">
+      </div>
+    </div>
+
+    <div class="qrid-box">
+      <div class="qrid-label">Your QR ID (needed to log in)</div>
+      <div class="qrid-value" id="qridValue">{{ qr_id }}</div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="copyQrId()">📋 Copy</button>
+    </div>
+
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
       <a href="{{ url_for('patient.qr_image', qr_id=qr_id) }}"
          download="securemed-qr.png"
@@ -23,7 +34,7 @@
   </div>
 </div>
 
-<div class="card">
+<div class="card reveal reveal-delay-1">
   <h2 class="card-title" style="font-size:17px">Recent access log</h2>
   <p class="card-sub" style="margin-bottom:1rem">Every scan attempt is recorded — successful or not.</p>
   {% if logs %}
@@ -60,4 +71,14 @@
   {% endif %}
 </div>
 </div>
+<script>
+function copyQrId() {
+  const text = document.getElementById('qridValue').innerText;
+  const btn = event.target;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerText = '✓ Copied';
+    setTimeout(() => { btn.innerText = '📋 Copy'; }, 1500);
+  });
+}
+</script>
 {% endblock %}
